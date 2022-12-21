@@ -1,6 +1,4 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
 
 function App() {
   const [data, setData] = React.useState(null);
@@ -11,11 +9,13 @@ function App() {
       .then((data) => setData(data.message));
   }, []);
 
+  const msg = "BarcodeDetector" in window ? 'supportted' : 'not supported';
+
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        a<p>{!data ? "Loading..." : data}</p>
+        <p>{!data ? "Loading..." : data}</p>
+        <p>{msg}</p>
       </header>
     </div>
   );
