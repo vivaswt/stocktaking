@@ -2,7 +2,7 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, St
 import { useState } from "react";
 import { loadMaterials } from "./material";
 
-export default function EditStockDialog({ stock, open, mode, handleRegist, handleUpdate, handleClose }) {
+export default function EditStockDialog({ stock, open, mode, handleInsert, handleUpdate, handleClose }) {
     const [data, setData] = useState({ ...stock });
     const materialItems = loadMaterials().map(m => (
         <MenuItem key={m.material} value={m.material}>{m.material}</MenuItem>
@@ -14,9 +14,9 @@ export default function EditStockDialog({ stock, open, mode, handleRegist, handl
     }
 
     const toInt = value => isNaN(parseInt(value)) ? '' : parseInt(value);
-    const handleRegistOnClick = () => {
+    const handleRegistClick = () => {
         if (mode === 'insert') {
-            handleRegist({ ...data, width: toInt(data.width), length: toInt(data.length) })
+            handleInsert({ ...data, width: toInt(data.width), length: toInt(data.length) })
         } else {
             handleUpdate({ ...data, width: toInt(data.width), length: toInt(data.length)})
         }
@@ -75,7 +75,7 @@ export default function EditStockDialog({ stock, open, mode, handleRegist, handl
                 <Button onClick={handleClose} color="secondary">
                     キャンセル
                 </Button>
-                <Button onClick={handleRegistOnClick} color="primary">
+                <Button onClick={handleRegistClick} color="primary">
                     {mode === 'insert' ? '追加' : '変更'}
                 </Button>
             </DialogActions>

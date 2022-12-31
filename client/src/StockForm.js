@@ -3,40 +3,71 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import EditStockDialog from "./EditStockDialog";
 import { useEffect, useRef, useState } from "react";
+import { loadStocks, saveStocks } from "./stock";
 
-function StockForm({ stocks, onAppendStock, onUpdateStock, onDeleteStock, shouldScrollId }) {
+function StockForm() {
+    const [stocks, setStocks] = useState(loadStocks());
+    const insertedStockId = useRef();
+
+    useEffect(() => {
+        const stocksToSave = stocks.filter(s => !s.deleted);
+
+        console.log(`save ${stocksToSave.length} stocks.`);
+        console.log(stocksToSave);
+        saveStocks(stocksToSave);
+    }, [stocks]);
+
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editMode, setEditMode] = useState('insert');
-    const [selectedStock, setSelectedStock] =
-        useState({ id: stocks.length + 1, material: '', width: '', lot: '', length: '', code: '', deleted: false });
+    const [inputStock, setInputStock] =
+        useState({ id: crypto.randomUUID(), material: '', width: '', lot: '', length: '', code: '', deleted: false });
 
-    const handleAddClicked = () => {
+    const handleInsertClick = () => {
         setEditMode('insert');
-        setSelectedStock({ id: stocks.length + 1, material: '', width: '', lot: '', length: '', code: '', deleted: false });
+        setInputStock({ id: crypto.randomUUID(), material: '', width: '', lot: '', length: '', code: '', deleted: false });
         setDialogOpen(true);
     };
 
-    const handleEditClicked = (id) => {
+    const handleUpdateClick = (id) => {
         const stock = stocks.filter(s => s.id === id)[0];
 
-        setSelectedStock({ ...stock });
+        setInputStock({ ...stock });
         setEditMode('update');
         setDialogOpen(true);
     };
 
-    const handleDeleteClicked = (id) => {
-        const stock = stocks.filter(s => s.id === id)[0];
-
-        onDeleteStock({ ...stock });
+    const handleDeleteClick = (id) => {
+        const newStocks = stocks.map(s => {
+            if (s.id === id) {
+                return { ...s, deleted: true };
+            } else {
+                return { ...s };
+            }
+        });
+        setStocks(newStocks);
     };
 
-    const handleRegist = (stock) => {
-        onAppendStock(stock);
+    const handleInsert = (stock) => {
+        const newStock = {
+            id: stocks.length + 1,
+            ...stock
+        };
+
+        insertedStockId.current = newStock.id;
+        setStocks([...(stocks.map(s => { return { ...s } })), newStock]);
         setDialogOpen(false);
     };
 
     const handleUpdate = (stock) => {
-        onUpdateStock(stock);
+        const newStocks = stocks.map(s => {
+            if (s.id === stock.id) {
+              return { ...stock };
+            } else {
+              return { ...s };
+            }
+          });
+          setStocks(newStocks);
+      
         setDialogOpen(false);
     };
 
@@ -48,9 +79,9 @@ function StockForm({ stocks, onAppendStock, onUpdateStock, onDeleteStock, should
         <Collapse in={!s.deleted} key={s.id}>
             <StockListItem
                 stock={s}
-                handleDeleteClicked={handleDeleteClicked}
-                handleEditClicked={handleEditClicked}
-                shouldScrollTo={shouldScrollId === s.id}
+                handleDeleteClick={handleDeleteClick}
+                handleUpdateClick={handleUpdateClick}
+                shouldScrollTo={insertedStockId.current === s.id}
             />
         </Collapse>
     ));
@@ -60,16 +91,16 @@ function StockForm({ stocks, onAppendStock, onUpdateStock, onDeleteStock, should
             <Fab
                 color="primary"
                 style={{ position: 'fixed', right: '2em', bottom: '2em' }}
-                onClick={handleAddClicked}
+                onClick={handleInsertClick}
             >
                 <AddIcon />
             </Fab>
             {dialogOpen ? (
                 <EditStockDialog
-                    stock={selectedStock}
+                    stock={inputStock}
                     open={dialogOpen}
                     mode={editMode}
-                    handleRegist={handleRegist}
+                    handleInsert={handleInsert}
                     handleUpdate={handleUpdate}
                     handleClose={handleDialogClose}
                 />
@@ -116,19 +147,19 @@ function StockItem({ stock }) {
     );
 }
 
-function StockListItem({ stock, handleDeleteClicked, handleEditClicked, shouldScrollTo }) {
+function StockListItem({ stock, handleDeleteClick, handleUpdateClick, shouldScrollTo }) {
     const ref = useRef();
 
     useEffect(() => {
         shouldScrollTo && ref.current.scrollIntoView(false);
-    }, []);
-    
+    }, [shouldScrollTo]);
+
     return (
         <ListItem
             secondaryAction={
                 <IconButton
                     edge="end"
-                    onClick={() => handleDeleteClicked(stock.id)}
+                    onClick={() => handleDeleteClick(stock.id)}
                 >
                     <DeleteIcon />
                 </IconButton>
@@ -137,7 +168,7 @@ function StockListItem({ stock, handleDeleteClicked, handleEditClicked, shouldSc
             ref={ref}
         >
             <ListItemButton
-                onClick={() => handleEditClicked(stock.id)}
+                onClick={() => handleUpdateClick(stock.id)}
             >
                 <ListItemText>
                     <StockItem stock={stock} />
