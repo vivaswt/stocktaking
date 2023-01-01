@@ -4,6 +4,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditStockDialog from "./EditStockDialog";
 import { useEffect, useRef, useState } from "react";
 import { loadStocks, saveStocks } from "./stock";
+import PictureAsPdf from '@mui/icons-material/PictureAsPdf';
 
 function StockForm() {
     const [stocks, setStocks] = useState(loadStocks());
@@ -11,9 +12,6 @@ function StockForm() {
 
     useEffect(() => {
         const stocksToSave = stocks.filter(s => !s.deleted);
-
-        console.log(`save ${stocksToSave.length} stocks.`);
-        console.log(stocksToSave);
         saveStocks(stocksToSave);
     }, [stocks]);
 
@@ -61,19 +59,29 @@ function StockForm() {
     const handleUpdate = (stock) => {
         const newStocks = stocks.map(s => {
             if (s.id === stock.id) {
-              return { ...stock };
+                return { ...stock };
             } else {
-              return { ...s };
+                return { ...s };
             }
-          });
-          setStocks(newStocks);
-      
+        });
+        setStocks(newStocks);
+
         setDialogOpen(false);
     };
 
     const handleDialogClose = () => {
         setDialogOpen(false);
     };
+
+    const dataForm = useRef();
+
+    const handlePDFClick = () => {
+        dataForm.current.submit();
+    }
+
+    const stocksToJSON = (stocks) => {
+        return JSON.stringify(stocks.filter(s => !s.deleted));
+    }
 
     const listItems = stocks.map(s => (
         <Collapse in={!s.deleted} key={s.id}>
@@ -95,6 +103,11 @@ function StockForm() {
             >
                 <AddIcon />
             </Fab>
+
+            <IconButton onClick={handlePDFClick}>
+                <PictureAsPdf />
+            </IconButton>
+
             {dialogOpen ? (
                 <EditStockDialog
                     stock={inputStock}
@@ -105,9 +118,14 @@ function StockForm() {
                     handleClose={handleDialogClose}
                 />
             ) : ''}
+
             <List>
                 {listItems}
             </List>
+            <DataForm
+                formRef={dataForm}
+                value={stocksToJSON(stocks)}
+            />
         </div>
     );
 }
@@ -178,4 +196,20 @@ function StockListItem({ stock, handleDeleteClick, handleUpdateClick, shouldScro
     );
 }
 
+function DataForm({ formRef, value }) {
+    return (
+        <form
+            ref={formRef}
+            action="/api/pdf"
+            method="post"
+            target="_blank"
+        >
+            <input
+                name="stocks"
+                type="hidden"
+                value={value}
+            />
+        </form>
+    );
+}
 export default StockForm;

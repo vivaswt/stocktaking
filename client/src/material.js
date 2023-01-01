@@ -25,9 +25,9 @@ function defaultMaterials() {
         {material: 'SP-8KFアオ(L)ウチマキ', code: 1},
       ];
 
-      let code = 1;
+      let code = 16000;
       for (const r of result) {
-        r.code = code++;
+        r.code = (code++).toString();
       }
 
       return result.sort((a, b) => a.material.localeCompare(b.material));    
