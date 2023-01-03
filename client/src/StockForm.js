@@ -1,12 +1,15 @@
-import { Collapse, Fab, IconButton, List, ListItem, ListItemButton, ListItemText } from "@mui/material";
+import { Collapse, Fab, IconButton, List, ListItem, ListItemButton, ListItemText, Menu, MenuItem, ListItemIcon } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import EditStockDialog from "./EditStockDialog";
 import { useEffect, useRef, useState } from "react";
 import { loadStocks, saveStocks } from "./stock";
-import PictureAsPdf from '@mui/icons-material/PictureAsPdf';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import AppMenu from "./AppMenu";
 
-function StockForm() {
+function StockForm({onMenuChange}) {
     const [stocks, setStocks] = useState(loadStocks());
     const insertedStockId = useRef();
 
@@ -77,11 +80,26 @@ function StockForm() {
 
     const handlePDFClick = () => {
         dataForm.current.submit();
-    }
+    };
 
     const stocksToJSON = (stocks) => {
         return JSON.stringify(stocks.filter(s => !s.deleted));
-    }
+    };
+
+    const deleteAllItem = () => {
+        stocks.forEach(s => {
+            setStocks(prev => {
+                const newStocks = prev.map(prevStock => {
+                    if (s.id === prevStock.id) {
+                        return { ...prevStock, deleted: true };
+                    } else {
+                        return { ...prevStock };
+                    }
+                });
+                return newStocks;
+            });
+        });
+    };
 
     const listItems = stocks.map(s => (
         <Collapse in={!s.deleted} key={s.id}>
@@ -96,6 +114,16 @@ function StockForm() {
 
     return (
         <div>
+            <AppMenu
+                title="在庫証明書(仕掛品)"
+                onMenuChange={onMenuChange}
+            >
+                <IconButton onClick={handlePDFClick} color="inherit">
+                    <PictureAsPdfIcon />
+                </IconButton>
+                <MoreMenu deleteAllItem={deleteAllItem} />
+            </AppMenu>
+
             <Fab
                 color="primary"
                 style={{ position: 'fixed', right: '2em', bottom: '2em' }}
@@ -103,10 +131,6 @@ function StockForm() {
             >
                 <AddIcon />
             </Fab>
-
-            <IconButton onClick={handlePDFClick}>
-                <PictureAsPdf />
-            </IconButton>
 
             {dialogOpen ? (
                 <EditStockDialog
@@ -119,15 +143,30 @@ function StockForm() {
                 />
             ) : ''}
 
-            <List>
+            <List sx={{marginTop: 8}}>
                 {listItems}
             </List>
+
             <DataForm
                 formRef={dataForm}
-                value={stocksToJSON(stocks)}
+                stocks={stocksToJSON(stocks)}
+                reportYM={JSON.stringify(getReportYM())}
             />
         </div>
     );
+}
+
+function getReportYM() {
+    const now = new Date();
+    if (now.getDate() <= 20) {
+        if (now.getMonth() === 0) {
+            return {year: now.getFullYear() - 1, month: 12};
+        } else {
+            return {year: now.getFullYear(), month: now.getMonth()};
+        }
+    } else {
+        return {year: now.getFullYear(), month: now.getMonth + 1};
+    }
 }
 
 function StockItem({ stock }) {
@@ -196,7 +235,7 @@ function StockListItem({ stock, handleDeleteClick, handleUpdateClick, shouldScro
     );
 }
 
-function DataForm({ formRef, value }) {
+function DataForm({ formRef, stocks, reportYM }) {
     return (
         <form
             ref={formRef}
@@ -207,9 +246,51 @@ function DataForm({ formRef, value }) {
             <input
                 name="stocks"
                 type="hidden"
-                value={value}
+                value={stocks}
+            />
+            <input
+                name="reportYM"
+                type="hidden"
+                value={reportYM}
             />
         </form>
     );
 }
+
+function MoreMenu({ deleteAllItem }) {
+    const [anchorEl, setAnchorEl] = useState(null);
+    const open = Boolean(anchorEl);
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    return (
+        <div>
+            <IconButton
+                color="inherit"
+                onClick={handleClick}
+            >
+                <MoreVertIcon />
+            </IconButton>
+            <Menu
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+            >
+                <MenuItem onClick={() => { handleClose(); deleteAllItem() }}>
+                    <ListItemIcon>
+                        <DeleteForeverIcon />
+                    </ListItemIcon>
+                    <ListItemText>
+                        全明細削除
+                    </ListItemText>
+                </MenuItem>
+            </Menu>
+        </div>
+    );
+}
+
 export default StockForm;
