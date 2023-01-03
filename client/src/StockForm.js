@@ -1,6 +1,5 @@
 import { Collapse, Fab, IconButton, List, ListItem, ListItemButton, ListItemText, Menu, MenuItem, ListItemIcon } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
 import EditStockDialog from "./EditStockDialog";
 import { useEffect, useRef, useState } from "react";
 import { loadStocks, saveStocks } from "./stock";
@@ -8,8 +7,11 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AppMenu from "./AppMenu";
+import QrScanForm from "./QrScanForm";
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 
-function StockForm({onMenuChange}) {
+function StockForm({ onMenuChange }) {
     const [stocks, setStocks] = useState(loadStocks());
     const insertedStockId = useRef();
 
@@ -22,6 +24,7 @@ function StockForm({onMenuChange}) {
     const [editMode, setEditMode] = useState('insert');
     const [inputStock, setInputStock] =
         useState({ id: crypto.randomUUID(), material: '', width: '', lot: '', length: '', code: '', deleted: false });
+    const [scanOpen, setScanOpen] = useState(false);
 
     const handleInsertClick = () => {
         setEditMode('insert');
@@ -76,6 +79,10 @@ function StockForm({onMenuChange}) {
         setDialogOpen(false);
     };
 
+    const handleScanClose = () => {
+        setScanOpen(false);
+    };
+
     const dataForm = useRef();
 
     const handlePDFClick = () => {
@@ -118,6 +125,9 @@ function StockForm({onMenuChange}) {
                 title="在庫証明書(仕掛品)"
                 onMenuChange={onMenuChange}
             >
+                <IconButton onClick={handleInsertClick} color="inherit">
+                    <AddCircleIcon />
+                </IconButton>
                 <IconButton onClick={handlePDFClick} color="inherit">
                     <PictureAsPdfIcon />
                 </IconButton>
@@ -127,9 +137,9 @@ function StockForm({onMenuChange}) {
             <Fab
                 color="primary"
                 style={{ position: 'fixed', right: '2em', bottom: '2em' }}
-                onClick={handleInsertClick}
+                onClick={() => setScanOpen(true)}
             >
-                <AddIcon />
+                <AddAPhotoIcon />
             </Fab>
 
             {dialogOpen ? (
@@ -143,7 +153,15 @@ function StockForm({onMenuChange}) {
                 />
             ) : ''}
 
-            <List sx={{marginTop: 8}}>
+            {scanOpen && (
+                <QrScanForm
+                    open={scanOpen}
+                    handleInsert={handleInsert}
+                    handleClose={handleScanClose}
+                />
+            )}
+
+            <List sx={{ marginTop: 8 }}>
                 {listItems}
             </List>
 
@@ -160,12 +178,12 @@ function getReportYM() {
     const now = new Date();
     if (now.getDate() <= 20) {
         if (now.getMonth() === 0) {
-            return {year: now.getFullYear() - 1, month: 12};
+            return { year: now.getFullYear() - 1, month: 12 };
         } else {
-            return {year: now.getFullYear(), month: now.getMonth()};
+            return { year: now.getFullYear(), month: now.getMonth() };
         }
     } else {
-        return {year: now.getFullYear(), month: now.getMonth + 1};
+        return { year: now.getFullYear(), month: now.getMonth + 1 };
     }
 }
 

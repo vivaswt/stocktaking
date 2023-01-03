@@ -1,4 +1,4 @@
-import { Backdrop, IconButton, List, ListItem } from "@mui/material";
+import { Backdrop, IconButton, List, ListItem, ListItemText } from "@mui/material";
 import { useEffect, useState } from "react";
 import AppMenu from "./AppMenu";
 import { downloadMaterials, loadMaterials } from './material';
@@ -38,7 +38,7 @@ function MaterialForm({ onMenuChange }) {
         }
         setMessageOpen(false);
     };
- 
+
     return (
         <div>
             <AppMenu
@@ -75,8 +75,10 @@ function ListItems({ data }) {
     const items = data.map(d => {
         return (
             <ListItem key={d.material}>
-                <span style={{ width: '20em' }}>{d.material}</span>
-                <span style={{ width: '6em' }}>{d.code}</span>
+                <ListItemText>
+                    <span style={{ display: 'inline-block', width: '20em' }}>{d.material}</span>
+                    <span style={{ display: 'inline-block', width: '6em' }}>{d.code}</span>
+                </ListItemText>
             </ListItem>
         );
     });
