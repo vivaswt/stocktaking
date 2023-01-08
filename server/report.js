@@ -3,8 +3,9 @@ const { readFile } = require('node:fs/promises');
 const fontkit = require('@pdf-lib/fontkit');
 const path = require('path');
 
-async function createPDF(stocks, reportYM) {
-    const formPdfBytes = await readFile(path.resolve(__dirname, 'wip.pdf'));
+async function createPDF(stockType, stocks, reportYM) {
+    const formPdfBytes = await readFile(
+        path.resolve(__dirname, stockType === 'wip' ? 'wip.pdf' : 'product.pdf'));
     const pdfDoc = await PDFDocument.create();
     const [form] = await pdfDoc.embedPdf(formPdfBytes);
     const page = await pdfDoc.addPage();
@@ -23,7 +24,7 @@ async function createPDF(stocks, reportYM) {
             page.drawPage(form);
 
             page.drawText(reportYM.month.toString().padStart(2), {
-                x: 146,
+                x: stockType === 'wip' ? 148 : 158,
                 y: 713,
                 size: 20,
                 font: font
@@ -83,12 +84,14 @@ async function createPDF(stocks, reportYM) {
             size: 12,
             font: font
         });
-        page.drawText(stock.code, {
-            x: 507,
-            y: 663 - 20.4 * index,
-            size: 12,
-            font: font
-        });
+        if (stockType === 'wip') {
+            page.drawText(stock.code, {
+                x: 507,
+                y: 663 - 20.4 * index,
+                size: 12,
+                font: font
+            });
+        }
     });
 
     const pdfBytes = await pdfDoc.save();

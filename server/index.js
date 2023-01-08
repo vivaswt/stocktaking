@@ -14,14 +14,24 @@ app.use(express.static(path.resolve(__dirname, '../client/build')));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
-app.post('/api/pdf', (req, res) => {
+app.post('/api/pdf/wip', (req, res) => {
     const pdf = createPDF(
+        'wip',
         JSON.parse(req.body.stocks),
         JSON.parse(req.body.reportYM));
     pdf.then(bytes => {
         res.end(Buffer.from(bytes, 'binary'));
     });
-    
+});
+
+app.post('/api/pdf/product', (req, res) => {
+    const pdf = createPDF(
+        'product',
+        JSON.parse(req.body.stocks),
+        JSON.parse(req.body.reportYM));
+    pdf.then(bytes => {
+        res.end(Buffer.from(bytes, 'binary'));
+    });
 });
 
 app.post('/api/materials', (req, res, next) => {

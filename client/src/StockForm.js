@@ -2,7 +2,6 @@ import { Collapse, Fab, IconButton, List, ListItem, ListItemButton, ListItemText
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditStockDialog from "./EditStockDialog";
 import { useEffect, useRef, useState } from "react";
-import { loadStocks, saveStocks } from "./stock";
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -11,14 +10,14 @@ import QrScanForm from "./QrScanForm";
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 
-function StockForm({ onMenuChange }) {
-    const [stocks, setStocks] = useState(loadStocks());
+function StockForm({ stockType, onMenuChange }) {
+    const [stocks, setStocks] = useState(stockType.load());
     const insertedStockId = useRef();
 
     useEffect(() => {
         const stocksToSave = stocks.filter(s => !s.deleted);
-        saveStocks(stocksToSave);
-    }, [stocks]);
+        stockType.save(stocksToSave);
+    }, [stocks, stockType]);
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editMode, setEditMode] = useState('insert');
@@ -122,7 +121,7 @@ function StockForm({ onMenuChange }) {
     return (
         <div>
             <AppMenu
-                title="在庫証明書(仕掛品)"
+                title={stockType.title}
                 onMenuChange={onMenuChange}
             >
                 <IconButton onClick={handleInsertClick} color="inherit">
@@ -169,6 +168,7 @@ function StockForm({ onMenuChange }) {
                 formRef={dataForm}
                 stocks={stocksToJSON(stocks)}
                 reportYM={JSON.stringify(getReportYM())}
+                pdfApi={stockType.pdfApi}
             />
         </div>
     );
@@ -253,11 +253,11 @@ function StockListItem({ stock, handleDeleteClick, handleUpdateClick, shouldScro
     );
 }
 
-function DataForm({ formRef, stocks, reportYM }) {
+function DataForm({ formRef, stocks, reportYM, pdfApi }) {
     return (
         <form
             ref={formRef}
-            action="/api/pdf"
+            action={pdfApi}
             method="post"
             target="_blank"
         >

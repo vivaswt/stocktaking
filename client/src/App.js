@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import ConfigForm from './ConfigForm';
-import StockForm from './StockForm';
 import MaterialForm from './MaterialForm';
+import WipStockForm from './WipStockForm';
+import ProductStockForm from "./ProductStockForm";
 
 function App() {
   const [menu, setMenu] = useState(1);
   
   return (
     <div>
-      {menu === 1 && <StockForm onMenuChange={setMenu} />}
-      {menu === 2 && <MaterialForm onMenuChange={setMenu} />}
-      {menu === 3 && <ConfigForm onMenuChange={setMenu} />}
+      {menu === 1 && <WipStockForm onMenuChange={setMenu} />}
+      {menu === 2 && <ProductStockForm onMenuChange={setMenu} />}
+      {menu === 3 && <MaterialForm onMenuChange={setMenu} />}
+      {menu === 4 && <ConfigForm onMenuChange={setMenu} />}
     </div>
   );
 }

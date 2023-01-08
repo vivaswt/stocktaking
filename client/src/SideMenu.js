@@ -21,14 +21,19 @@ function SideMenu({ open, onMenuChange, changeOpenState }) {
                     onClick={handleMenuClick(1)}
                 />
                 <MenuItem
+                    icon={<NoteAltIcon />}
+                    text="製品"
+                    onClick={handleMenuClick(2)}
+                />
+                <MenuItem
                     icon={<AdjustIcon />}
                     text="品名"
-                    onClick={handleMenuClick(2)}
+                    onClick={handleMenuClick(3)}
                 />
                 <MenuItem
                     icon={<SettingsIcon />}
                     text="設定"
-                    onClick={handleMenuClick(3)}
+                    onClick={handleMenuClick(4)}
                 />
             </List>
         </Drawer>

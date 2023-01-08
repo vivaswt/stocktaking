@@ -1,9 +1,9 @@
-const storageKey = 'stocks';
+const storageKey = 'wipStocks';
 
-function saveStocks(stocks) {
+function saveWipStocks(stocks) {
     localStorage.setItem(storageKey, JSON.stringify(stocks));
 }
-function loadStocks() {
+function loadWipStocks() {
     const item = localStorage.getItem(storageKey);
     if (!item) {
         return [];
@@ -12,6 +12,6 @@ function loadStocks() {
 }
 
 export {
-    saveStocks,
-    loadStocks
+    saveWipStocks,
+    loadWipStocks
 };
