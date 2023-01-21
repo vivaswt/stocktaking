@@ -183,7 +183,7 @@ function getReportYM() {
             return { year: now.getFullYear(), month: now.getMonth() };
         }
     } else {
-        return { year: now.getFullYear(), month: now.getMonth + 1 };
+        return { year: now.getFullYear(), month: now.getMonth() + 1 };
     }
 }
 
