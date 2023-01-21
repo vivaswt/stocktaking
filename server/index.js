@@ -2,7 +2,7 @@ const path = require('path');
 const express = require("express");
 const bodyParser = require('body-parser');
 const createPDF = require('./report');
-const downloadMaterials = require('./notion');
+const {downloadMaterials} = require('./notionBusinessDataHandler');
 
 const PORT = process.env.PORT || 3001;
 
