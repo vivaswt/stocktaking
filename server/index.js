@@ -2,7 +2,7 @@ const path = require('path');
 const express = require("express");
 const bodyParser = require('body-parser');
 const createPDF = require('./report');
-const {downloadMaterials} = require('./notionBusinessDataHandler');
+const {downloadMaterials, downloadProductRecordsByDate} = require('./notionBusinessDataHandler');
 
 const PORT = process.env.PORT || 3001;
 
@@ -37,6 +37,13 @@ app.post('/api/pdf/product', (req, res) => {
 app.post('/api/materials', (req, res, next) => {
     downloadMaterials(req.body.token)
         .then(ms => res.json(ms))
+        .catch(e => next(e));
+});
+
+app.post('/api/product-records-by-date', (req, res, next) => {
+    const date = new Date(req.body.date);
+    downloadProductRecordsByDate(req.body.token, date)
+        .then(data => res.json(data))
         .catch(e => next(e));
 });
 

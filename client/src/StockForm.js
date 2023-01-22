@@ -1,4 +1,4 @@
-import { Collapse, Fab, IconButton, List, ListItem, ListItemButton, ListItemText, Menu, MenuItem, ListItemIcon } from "@mui/material";
+import { Collapse, Fab, IconButton, List, ListItem, ListItemButton, ListItemText, Menu, MenuItem, ListItemIcon, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, TextField, Backdrop, CircularProgress } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditStockDialog from "./EditStockDialog";
 import { useEffect, useRef, useState } from "react";
@@ -9,6 +9,16 @@ import AppMenu from "./AppMenu";
 import QrScanForm from "./QrScanForm";
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import 'moment/locale/ja';
+import axios from 'axios'
+import { loadConfig } from "./config";
+import { loadMaterials } from "./material";
+import { MessageBar } from "./MessageBar";
+import { slideAnimationDuration } from "@mui/x-date-pickers/CalendarPicker/PickersSlideTransition";
 
 function StockForm({ stockType, onMenuChange }) {
     const [stocks, setStocks] = useState(stockType.load());
@@ -23,7 +33,6 @@ function StockForm({ stockType, onMenuChange }) {
     const [editMode, setEditMode] = useState('insert');
     const [inputStock, setInputStock] =
         useState({ id: crypto.randomUUID(), material: '', width: '', lot: '', length: '', code: '', deleted: false });
-    const [scanOpen, setScanOpen] = useState(false);
 
     const handleInsertClick = () => {
         setEditMode('insert');
@@ -52,8 +61,8 @@ function StockForm({ stockType, onMenuChange }) {
 
     const handleInsert = (stock) => {
         const newStock = {
-            id: stocks.length + 1,
-            ...stock
+            ...stock,
+            id: crypto.randomUUID()
         };
 
         insertedStockId.current = newStock.id;
@@ -78,8 +87,80 @@ function StockForm({ stockType, onMenuChange }) {
         setDialogOpen(false);
     };
 
+    const [scanOpen, setScanOpen] = useState(false);
     const handleScanClose = () => {
         setScanOpen(false);
+    };
+
+    const [importDatePickerOpen, setImportDatePickerOpen] = useState(false);
+    const handleImportDatePickerClose = () => {
+        setImportDatePickerOpen(false);
+    };
+
+    const handleImportClick = () => {
+        setImportDatePickerOpen(true);
+    };
+
+    const importFromProductRecord = date => {
+        const token = loadConfig().notionToken ?? '';
+        
+        setImportDatePickerOpen(false);
+        setOnProcessing(true);
+
+        axios.post(
+            '/api/product-records-by-date',
+            {
+                responseType: 'json',
+                token: token,
+                date: date
+            })
+            .then(res => res.data.filter(stockType.importFilter))
+            .then(mapProductRecordToStock)
+            .then(mergeStocks)
+            .then(importedCount => {
+                if (importedCount === 0) {
+                    setMessageText(`該当する仕上記録がありません`);
+                } else {
+                    setMessageText(`${importedCount}件の仕上記録をインポートしました`);
+                }
+                setOnProcessing(false);
+                setMessageOpen(true);
+            }).catch(e => {
+                setOnProcessing(false);
+                setMessageText(e.message);
+                setMessageOpen(true);
+                console.error(e.message);
+            });
+    };
+
+    const mapProductRecordToStock = records => {
+        const materials = loadMaterials();
+        const lookupCode = material => {
+            const m = materials.find(m => m.material === material);
+            return !m ? '' : m.code;
+        };
+
+        return records.map(r => {
+            return {
+                id: crypto.randomUUID(),
+                material: r.material,
+                width: r.width,
+                lot: r.lot,
+                length: r.length,
+                code: lookupCode(r.material)
+            };
+        });
+    };
+
+    const mergeStocks = stocksToMerge => {
+        const duplicateStocks = stocks => stocks.map(s => { return { ...s } });
+
+        stocksToMerge.forEach(stock => {
+            insertedStockId.current = stock.id;
+            setStocks(prevStocks => [...(duplicateStocks(prevStocks)), stock]);
+        });
+
+        return stocksToMerge.length;
     };
 
     const dataForm = useRef();
@@ -107,6 +188,17 @@ function StockForm({ stockType, onMenuChange }) {
         });
     };
 
+    const [messageOpen, setMessageOpen] = useState(false);
+    const [messageText, setMessageText] = useState('');
+    const handleMassageClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setMessageOpen(false);
+    };
+
+    const [onProcessing, setOnProcessing] = useState(false);
+
     const listItems = stocks.map(s => (
         <Collapse in={!s.deleted} key={s.id}>
             <StockListItem
@@ -118,14 +210,19 @@ function StockForm({ stockType, onMenuChange }) {
         </Collapse>
     ));
 
+    const countOfStocks = stocks.filter(s => !s.deleted).length;
+
     return (
         <div>
             <AppMenu
-                title={stockType.title}
+                title={`${stockType.title} - ${countOfStocks}件`}
                 onMenuChange={onMenuChange}
             >
                 <IconButton onClick={handleInsertClick} color="inherit">
                     <AddCircleIcon />
+                </IconButton>
+                <IconButton onClick={handleImportClick} color="inherit">
+                    <CloudDownloadIcon />
                 </IconButton>
                 <IconButton onClick={handlePDFClick} color="inherit">
                     <PictureAsPdfIcon />
@@ -159,6 +256,25 @@ function StockForm({ stockType, onMenuChange }) {
                     handleClose={handleScanClose}
                 />
             )}
+
+            <ImportDatePicker
+                open={importDatePickerOpen}
+                handleImport={importFromProductRecord}
+                handleClose={handleImportDatePickerClose}
+            />
+
+            <MessageBar
+                open={messageOpen}
+                message={messageText}
+                onClose={handleMassageClose}
+            />
+
+            <Backdrop
+                open={onProcessing}
+                sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
 
             <List sx={{ marginTop: 8 }}>
                 {listItems}
@@ -311,4 +427,36 @@ function MoreMenu({ deleteAllItem }) {
     );
 }
 
+function ImportDatePicker({ open, handleImport, handleClose }) {
+    const [date, setDate] = useState(new Date());
+
+    useEffect(() => {
+        if (open) {
+            setDate(new Date());
+        }
+    }, [open]);
+
+    return (
+        <Dialog open={open} onClose={handleClose}>
+            <DialogTitle>仕上記録インポート</DialogTitle>
+            <DialogContent>
+                <DialogContentText>
+                    インポートする仕上記録の作業日を選択してください。
+                </DialogContentText>
+                <LocalizationProvider dateAdapter={AdapterMoment}>
+                    <DatePicker
+                        value={date}
+                        onChange={setDate}
+                        inputFormat="YYYY年MM月DD日(dd)"
+                        renderInput={(params) => <TextField {...params} />}
+                    />
+                </LocalizationProvider>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleClose} color="secondary">キャンセル</Button>
+                <Button onClick={() => handleImport(date)} color="primary">インポート</Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
 export default StockForm;

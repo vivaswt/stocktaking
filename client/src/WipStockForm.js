@@ -5,7 +5,8 @@ const stockType = {
     title: '在庫証明書(仕掛品)',
     save: saveWipStocks,
     load: loadWipStocks,
-    pdfApi: '/api/pdf/wip'
+    pdfApi: '/api/pdf/wip',
+    importFilter: record => record.wip
 };
 
 function WipStockForm({ onMenuChange }) {

@@ -8,7 +8,7 @@ async function createPDF(stockType, stocks, reportYM) {
         path.resolve(__dirname, stockType === 'wip' ? 'wip.pdf' : 'product.pdf'));
     const pdfDoc = await PDFDocument.create();
     const [form] = await pdfDoc.embedPdf(formPdfBytes);
-    const page = await pdfDoc.addPage();
+    let page;
     pdfDoc.registerFontkit(fontkit);
     const fontBytes = await readFile(path.resolve(__dirname, 'GenShinGothic-Monospace-Normal.ttf'));
     const font = await pdfDoc.embedFont(fontBytes, { subset: true });
@@ -21,6 +21,7 @@ async function createPDF(stockType, stocks, reportYM) {
 
         // At new page
         if (indexInPage === 0) {
+            page = pdfDoc.addPage();
             page.drawPage(form);
 
             page.drawText(reportYM.month.toString().padStart(2), {
@@ -62,32 +63,32 @@ async function createPDF(stockType, stocks, reportYM) {
 
         page.drawText(stock.material, {
             x: 58,
-            y: 663 - 20.4 * index,
+            y: 663 - 20.4 * indexInPage,
             size: 12,
             font: font
         });
         page.drawText(stock.width.toString().padStart(4, ' '), {
             x: 259,
-            y: 663 - 20.4 * index,
+            y: 663 - 20.4 * indexInPage,
             size: 12,
             font: font
         });
         page.drawText(stock.lot, {
             x: 333.2,
-            y: 663 - 20.4 * index,
+            y: 663 - 20.4 * indexInPage,
             size: 12,
             font: font
         });
         page.drawText(stock.length.toLocaleString().padStart(6), {
             x: 442,
-            y: 663 - 20.4 * index,
+            y: 663 - 20.4 * indexInPage,
             size: 12,
             font: font
         });
         if (stockType === 'wip') {
             page.drawText(stock.code, {
                 x: 507,
-                y: 663 - 20.4 * index,
+                y: 663 - 20.4 * indexInPage,
                 size: 12,
                 font: font
             });
