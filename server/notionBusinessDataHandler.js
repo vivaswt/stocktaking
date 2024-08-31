@@ -1,7 +1,7 @@
-const {NotionApi} = require('./notionAPIBridge.js');
+const { NotionApi } = require('./notionAPIBridge.js');
 
 const databaseId = {
-    productRecord: '118bc908befa4dcb88c6b2d48b6ef8f4',
+    productRecord: 'f0bb03319a66498a850655cac183d8be',
     material: '43561683c2d846f09c1b71ea13e5b1db'
 };
 
