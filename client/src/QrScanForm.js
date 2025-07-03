@@ -10,7 +10,7 @@ function QrScanForm({ open, handleInsert, handleClose }) {
             .getUserMedia({
                 audio: false,
                 video: {
-                    facingMode: { exact: 'environment' }
+                    facingMode: { ideal: 'environment' }
                 }
             }).then(stream => {
                 videoElement.current.srcObject = stream;
