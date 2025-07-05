@@ -86,7 +86,7 @@ function findQR(video, setResult) {
         });
         return;
     }
-    const detector = new window.BarcodeDetector();
+    const detector = new window.BarcodeDetector({ formats: ['qr_code'] }); // QRコードのみ検出
     detector
         .detect(video)
         .then(barcodes => {
