@@ -308,13 +308,16 @@ function StockItem({ stock }) {
         display: 'inline-block', width: '20em'
     };
     const widthStyle = {
-        display: 'inline-block', width: '5em', textAlign: 'right'
+        display: 'inline-block', width: '5em', textAlign: 'right', marginLeft: '1em'
     };
     const lotStyle = {
-        display: 'inline-block', width: '8em'
+        display: 'inline-block', width: '8em', marginLeft: '1em'
     };
     const lengthStyle = {
-        display: 'inline-block', width: '6em', textAlign: 'right'
+        display: 'inline-block', width: '6em', textAlign: 'right', marginLeft: '1em'
+    };
+    const codeStyle = {
+        marginLeft: '1em'
     };
 
     return (
@@ -323,15 +326,15 @@ function StockItem({ stock }) {
                 {stock.material}
             </span>
             <span style={widthStyle}>
-                {`${stock.width}巾　`}
+                {`${stock.width}巾`}
             </span>
             <span style={lotStyle}>
                 {stock.lot}
             </span>
             <span style={lengthStyle}>
-                {`${stock.length.toLocaleString()}m　`}
+                {`${stock.length.toLocaleString()}m`}
             </span>
-            <span>
+            <span style={codeStyle}>
                 {stock.code}
             </span>
         </span>
