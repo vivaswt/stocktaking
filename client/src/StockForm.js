@@ -68,6 +68,10 @@ function StockForm({ stockType, onMenuChange }) {
         insertedStockId.current = newStock.id;
         setStocks([...(stocks.map(s => { return { ...s } })), newStock]);
         setDialogOpen(false);
+
+        // 追加メッセージを表示
+        setMessageText(`ロール№ ${newStock.lot} を追加しました`);
+        setMessageOpen(true);
     };
 
     const handleUpdate = (stock) => {
