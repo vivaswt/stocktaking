@@ -1,11 +1,14 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
-import { useRef, useEffect } from "react";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, DialogContentText } from "@mui/material";
+import { useRef, useEffect, useState } from "react";
 import { loadMaterials } from "./material";
 
 function QrScanForm({ open, handleInsert, handleClose }) {
     const videoElement = useRef(null);
+    const [errorMsg, setErrorMsg] = useState("");
 
     useEffect(() => {
+        if (!open) return;
+        setErrorMsg(""); // ダイアログを開くたびにエラーをリセット
         navigator.mediaDevices
             .getUserMedia({
                 audio: false,
@@ -16,29 +19,41 @@ function QrScanForm({ open, handleInsert, handleClose }) {
                 videoElement.current.srcObject = stream;
                 videoElement.current.onloadedmetadata = () => {
                     videoElement.current.play();
-                    findQR(videoElement.current, setResult);
+                    findQR(videoElement.current, handleResult);
                 };
             }).catch(e => {
-                console.log('camera error');
-                console.error(e);
-                //setVideoMsg(e.message);
+                setErrorMsg('カメラの起動に失敗しました: ' + e.message);
             });
-    }, []);
+        // クリーンアップ
+        return () => {
+            if (videoElement.current && videoElement.current.srcObject) {
+                videoElement.current.srcObject.getTracks().forEach(track => track.stop());
+            }
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open]);
 
-    const setResult = result => {
-        console.log(result);
+    const handleResult = result => {
         if (result.isSuccess) {
             handleInsert(result.stock);
+            handleClose();
+        } else {
+            setErrorMsg(result.message);
+            // エラー時は再度QR読み取りを再開
+            setTimeout(() => {
+                if (videoElement.current && open) {
+                    findQR(videoElement.current, handleResult);
+                }
+            }, 500);
         }
-        handleClose();
     };
 
     return (
         <Dialog
             open={open}
             onClose={handleClose}
-            fullWidth="true"
-            maxWidth="100%"
+            fullWidth={true}
+            maxWidth="sm"
         >
             <DialogTitle>QRコード読込み</DialogTitle>
             <DialogContent>
@@ -46,7 +61,13 @@ function QrScanForm({ open, handleInsert, handleClose }) {
                     autoPlay
                     playsInline
                     ref={videoElement}
+                    style={{ width: "100%" }}
                 />
+                {errorMsg && (
+                    <DialogContentText color="error" sx={{ mt: 2 }}>
+                        {errorMsg}
+                    </DialogContentText>
+                )}
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleClose} color="secondary">
@@ -58,20 +79,32 @@ function QrScanForm({ open, handleInsert, handleClose }) {
 }
 
 function findQR(video, setResult) {
+    if (!('BarcodeDetector' in window)) {
+        setResult({
+            isSuccess: false,
+            message: "このブラウザはBarcodeDetector APIに対応していません。"
+        });
+        return;
+    }
     const detector = new window.BarcodeDetector();
     detector
         .detect(video)
         .then(barcodes => {
-            if (barcodes.length > 0) {
+            if (barcodes.length === 0) {
+                setTimeout(() => findQR(video, setResult), 200);
+            } else if (barcodes.length > 1) {
+                setResult({
+                    isSuccess: false,
+                    message: "複数のQRコードが検出されました。1つだけ映してください。"
+                });
+            } else {
                 const code = barcodes[0].rawValue;
                 setResult(checkQrCode(code));
-            } else {
-                setTimeout(() => findQR(video, setResult), 200);
             }
         }).catch(e => {
             setResult({
                 isSuccess: false,
-                message: e.toString()
+                message: "QRコード検出エラー: " + e.toString()
             });
         });
 }
@@ -97,7 +130,7 @@ function checkQrCode(qrCode) {
     stock.width = parseInt(qrCode.slice(40, 44));
     stock.length = parseInt(qrCode.slice(49, 54));
     stock.lot = qrCode.slice(70, 77) + '-' + qrCode.slice(77, 80);
-    
+
     const materials = loadMaterials();
     const material = materials.find(m => m.code === stock.code);
 
